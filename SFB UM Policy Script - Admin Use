@@ -1,0 +1,197 @@
+#- Import list of user email addresses - does task 1 and task 2 for each user in imported CSV list -#
+#- PowerShell Script to import users in CSV file and run tasks on each user -#
+#- Skype for Business solution for admins to perform these tasks quicker -#
+#- Task 1 applies the specific UM Policy for different offices or groups -#
+#- Task 2 activates hosted voicemail - set to true -#
+#- Logs are created and will flag any failures upon checking if the the criteria is set to true -#
+
+[string]$ScriptName = 'Activate Cloud UM - SFB Solution'
+[string]$ScriptDate = '02/12/2019'
+[string]$ScriptAuthor = 'LJK'
+
+#======================================================= Login and credentials to SFB =================================================================#
+
+# Do not change anything in this section #
+$LyncCredential = Get-Credential -Message 'Enter SFB Admin Credentials'
+$session = New-PSSession -ConnectionUri https://ConnectionURL -Credential $LyncCredential
+Import-PsSession $session -AllowClobber
+
+#======================================================= Import and Output directory ==================================================================#
+
+$DataList = Import-Csv -Path "D:\ScriptData\Import\UserList.csv" # *** Change directory as required *** #
+$OutPath = "D:\ScriptData\Logs\UMGeneralLogs_$((Get-Date).ToString('yyyyMMdd')).txt" # *** Change directory as required - Log file naming scheme will add the system date of when the script was ran onto end of name for file record *** # 
+$OutPath2 = "D:\ScriptData\Logs\UMFailuresLogs_$((Get-Date).ToString('yyyyMMdd')).txt" # *** Change directory as required - Log file naming scheme will add the system date of when the script was ran onto end of name for file record *** # 
+$OutputLogs # Initialize OutputLogs and leave empty for logging use later
+
+#======================================================= Run tasks on imported users ==================================================================#
+
+
+Start-Transcript -Path $OutPath # General overlook log info #
+Write-Host "Running: $($ScriptName) - Author: $($ScriptAuthor) - Created: $($ScriptDate)"
+
+foreach ($data in $DataList) {
+
+$Users1 = $data.Office1 # Pull users under the 'Office1' header in the imported file - initialize that list then as DublinUsers #
+$Users2 = $data.Office2 # Pull users under the 'Office2' header in the imported file - initialize that list then as CorkUsers #
+$Users3 = $data.Office3 # Pull users under the 'Office3' header in the imported file - initialize that list then as BelfastUsers #
+$Users4 = $data.Office4 # Pull users under the 'Office4' header in the imported file - initialize that list then as GalwayUsers #
+$Users5 = $data.Office5 # Pull users under the 'Office5' header in the imported file - initialize that list then as NewbridgeUsers #
+$Users6 = $data.Office6 # Pull users under the 'Office6' header in the imported file - initialize that list then as LimerickUsers #
+
+# Pull data - for each individual data input in the data list. Also assigning OutputLogs = foreach tasks to log everything for each individual user #
+
+	if($Users1) {
+		Write-Output "***** Office Name *****"
+		Grant-cshostedvoicemailpolicy –identity $Users1 –policyname CloudUM # Task 1
+		Set-csuser -identity $Users1 -hostedvoicemail $true # Task 2
+		Write-Output "$($Users1) has been processed."
+	}
+
+	if($Users2) {
+		Write-Output "***** Office Name *****"
+		Grant-cshostedvoicemailpolicy –identity $Users2 –policyname CloudUM-2 # Task 1
+		Set-csuser -identity $Users2 -hostedvoicemail $true # Task 2
+		Write-Output "$($Users2) has been processed."
+	}
+
+	if($Users3) {
+		Write-Output "***** Office Name *****"
+		Grant-cshostedvoicemailpolicy –identity $Users3 –policyname CloudUM-3 # Task 1
+		Set-csuser -identity $Users3 -hostedvoicemail $true # Task 2
+		Write-Output "$($Users3) has been processed."
+	}
+
+	if($Users4) {
+		Write-Output "***** Office Name *****"
+		Grant-cshostedvoicemailpolicy –identity $Users4 –policyname CloudUM-4 # Task 1
+		Set-csuser -identity $Users4 -hostedvoicemail $true # Task 2
+		Write-Output "$($Users4) has been processed."
+	}
+
+	if($Users5) {
+		Write-Output "***** Office Name *****"
+		Grant-cshostedvoicemailpolicy –identity $Users5 –policyname CloudUM-5 # Task 1
+		Set-csuser -identity $Users5 -hostedvoicemail $true # Task 2
+		Write-Output "$($Users5) has been processed."
+	}
+
+	if($Users6) {
+		Write-Output "***** Office Name *****"
+		Grant-cshostedvoicemailpolicy –identity $Users6 –policyname Cloud-6 # Task 1
+		Set-csuser -identity $Users6 -hostedvoicemail $true # Task 2
+		Write-Output "$($Users6) has been processed."
+	}
+
+}
+
+Stop-Transcript
+
+#======================================================= Error logging - show any users who have failed the task process ===========================================================#
+
+Start-Transcript -Path $OutPath2
+Write-Host "Running: $($ScriptName) - Author: $($ScriptAuthor) - Created: $($ScriptDate)"
+
+foreach ($data in $DataList) {
+
+$Users1 = $data.Office1 # Pull users under the 'Office1' header in the imported file - initialize that list then as DublinUsers #
+$Users2 = $data.Office2 # Pull users under the 'Office2' header in the imported file - initialize that list then as CorkUsers #
+$Users3 = $data.Office3 # Pull users under the 'Office3' header in the imported file - initialize that list then as BelfastUsers #
+$Users4 = $data.Office4 # Pull users under the 'Office4' header in the imported file - initialize that list then as GalwayUsers #
+$Users5 = $data.Office5 # Pull users under the 'Office5' header in the imported file - initialize that list then as NewbridgeUsers #
+$Users6 = $data.Office6 # Pull users under the 'Office6' header in the imported file - initialize that list then as LimerickUsers #
+
+    if($Users1) {
+	Get-CsUser $Users1 | ForEach {
+
+		If ($_.HostedVoiceMail -eq 'True') {
+			# No log input if it is true.
+
+		}
+		Else {
+
+			Write-Output "***** $($Users1) has run into an error. Hosted Voice Mail not set to true *****"
+
+		}
+	}
+}
+
+    if($Users2) {
+    Get-CsUser $Users2 | ForEach {
+
+		If ($_.HostedVoiceMail -eq 'True') {
+			# No log input if it is true.
+
+		}
+		Else {
+
+			Write-Output "***** $($Users2) has run into an error. Hosted Voice Mail not set to true *****"
+
+		}
+	}
+}
+
+    if($Users3) {
+    Get-CsUser $Users3 | ForEach {
+
+		If ($_.HostedVoiceMail -eq 'True') {
+			# No log input if it is true.
+
+		}
+		Else {
+
+			Write-Output "***** $($Users3) has run into an error. Hosted Voice Mail not set to true *****"
+
+		}
+	}
+}
+
+    if($Users4) {
+    Get-CsUser $Users4 | ForEach {
+
+		If ($_.HostedVoiceMail -eq 'True') {
+			# No log input if it is true.
+
+		}
+		Else {
+
+			Write-Output "***** $($Users4) has run into an error. Hosted Voice Mail not set to true *****"
+
+		}
+	}
+}
+
+    if($Users5) {
+    Get-CsUser $Users5 | ForEach {
+
+		If ($_.HostedVoiceMail -eq 'True') {
+			# No log input if it is true.
+
+		}
+		Else {
+
+			Write-Output "***** $($Users5) has run into an error. Hosted Voice Mail not set to true *****"
+
+		}
+	}
+}
+
+    if($Users6) {
+    Get-CsUser $Users6 | ForEach {
+
+		If ($_.HostedVoiceMail -eq 'True') {
+			# No log input if it is true.
+
+		}
+		Else {
+
+			Write-Output "***** $($Users6) has run into an error. Hosted Voice Mail not set to true *****"
+
+		}
+	}
+}
+
+
+}
+
+Stop-Transcript
+Exit-PSSession
