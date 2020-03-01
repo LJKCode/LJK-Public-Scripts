@@ -1,5 +1,6 @@
 # Getting Data Usage Information #
 # PowerShell Script #
+# Gets basic network data usage and network information - exports to a text file. Text file then gets uploaded through Google Cloud API #
 
 [string]$ScriptName = 'Data Usage'
 [string]$ScriptAuthor = 'LJK'
