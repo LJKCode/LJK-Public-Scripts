@@ -36,9 +36,9 @@ Start-Transcript -Path $OutPath
 
 Stop-Transcript
 
-$refreshToken = "Refresh Token"
-$ClientID = "Client ID"
-$ClientSecret = "Client Secret"
+$refreshToken = "Refresh Token" # Enter your refresh token
+$ClientID = "Client ID" # Enter your Client ID
+$ClientSecret = "Client Secret" # Enter your Client Secret
 $grantType = "refresh_token" 
 $requestUri = "https://accounts.google.com/o/oauth2/token" 
 $GAuthBody = "refresh_token=$refreshToken&client_id=$ClientID&client_secret=$ClientSecret&grant_type=$grantType" 
