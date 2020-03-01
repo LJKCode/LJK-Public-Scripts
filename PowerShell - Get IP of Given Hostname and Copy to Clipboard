@@ -1,3 +1,9 @@
+# Get IP of Given Hostname and Copy to Clipboard #
+# PowerShell Script #
+
+[string]$ScriptName = 'Get Hostname IP'
+[string]$ScriptAuthor = 'LJK'
+
 [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
 [System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic') | Out-Null
 
