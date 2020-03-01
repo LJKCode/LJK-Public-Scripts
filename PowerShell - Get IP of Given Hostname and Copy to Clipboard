@@ -1,0 +1,55 @@
+[System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+[System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic') | Out-Null
+
+$hostname = [Microsoft.VisualBasic.Interaction]::InputBox("Enter Hostname of the device below.`nType Exit below to end script instead.", "IP Checker")
+
+If(!$hostname){
+
+    Exit
+
+}else{
+
+    $machine = $hostname -split '\s|\('
+    $machine = $machine[0]
+    $ip = (Test-Connection -comp $machine -Count 1).ipv4address.ipaddressToString
+
+    "Machine Name: $hostname"
+    " "
+    "IP Address: $ip"
+    " "
+
+    If(!$ip){
+
+        [System.Windows.Forms.Messagebox]::Show("The device with hostname $($hostname) is not online or cannot be pinged.", "IP Checker")
+
+    }elseIf($ip){
+
+        function set-clipboard{
+        param(
+            [parameter(position=0,mandatory=$true,ValueFromPipeline=$true)]$Text
+        )
+        begin{
+            $data = [system.text.stringbuilder]::new()
+        }
+
+        process{
+            if ($text){
+                [void]$data.appendline($text)
+            }
+        }
+
+        end{
+            if ($data){
+                $data.tostring().trimend([environment]::newline) + [convert]::tochar(0) | clip.exe
+            }
+        }
+    }
+
+[System.Windows.Forms.Messagebox]::Show("IP for $($hostname) is $($ip). IP copied to clipboard.", "IP Checker")
+ 
+"$ip" | Set-Clipboard
+
+    }
+}
+
+Exit
