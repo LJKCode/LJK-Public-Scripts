@@ -1,0 +1,84 @@
+# Getting Data Usage Information #
+
+[string]$ScriptName = 'Data Usage'
+[string]$ScriptAuthor = 'LJK'
+
+$NetCall = Get-NetAdapterStatistics
+$OutPath = "C:\DataUsage\DataUsage_$((Get-Date).ToString('ddMMMMyyyy'))_$((Get-Date).ToString('HHmm')).txt"
+
+$SentData = $NetCall.SentBytes
+$ReceivedData = $NetCall.ReceivedBytes
+
+Start-Transcript -Path $OutPath
+
+    Try {
+
+	    Write-Host "Running: $($ScriptName) - Author: $($ScriptAuthor)"
+
+        }Catch {}
+
+    Write-Output "Date: $((Get-Date).ToString('dd/MM/yyyy'))"
+    Write-Output "Time: $((Get-Date).ToString('HH:mm'))"
+
+    Write-Output "`n"
+    Write-Output "********** Basic Data Usage Info **********"
+    $NetCall
+
+    Write-Output "`n"
+    Write-Output "Sent Data: $($SentData)"
+    Write-Output "Received Data: $($ReceivedData)"
+
+    Write-Output "`n"
+    Write-Output "********** Full diagnostics **********"
+    $NetCall | FL
+
+Stop-Transcript
+
+$refreshToken = "Refresh Token"
+$ClientID = "Client ID"
+$ClientSecret = "Client Secret"
+$grantType = "refresh_token" 
+$requestUri = "https://accounts.google.com/o/oauth2/token" 
+$GAuthBody = "refresh_token=$refreshToken&client_id=$ClientID&client_secret=$ClientSecret&grant_type=$grantType" 
+
+$GAuthResponse = Invoke-RestMethod -Method Post -Uri $requestUri -ContentType "application/x-www-form-urlencoded" -Body $GAuthBody
+$accessToken = $GAuthResponse.access_token 
+ 
+$GUploadURI  = "https://www.googleapis.com/upload/drive/v2/files?uploadType=multipart"
+$GBodySize = ($GUploadBody | Measure-Object  -property length -sum).Sum 
+ 
+$headers = @{"Authorization" = "Bearer $accessToken"          
+ 
+              "Content-type" = "application/json"}
+
+$SourceFile = $OutPath
+$sourceItem = Get-Item $sourceFile
+$sourceBase64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($sourceItem.FullName))
+$sourceMime = [System.Web.MimeMapping]::GetMimeMapping($sourceItem.FullName)
+
+$uploadMetadata = @{
+    originalFilename = $sourceItem.Name
+    title = $sourceItem.Name
+    description = $sourceItem.VersionInfo.FileDescription
+}
+
+$uploadBody = @"
+--boundary
+Content-Type: application/json; charset=UTF-8
+$($uploadMetadata | ConvertTo-Json)
+--boundary
+Content-Transfer-Encoding: base64
+Content-Type: $sourceMime
+$sourceBase64
+--boundary--
+"@
+
+$uploadHeaders = @{
+    "Authorization" = "Bearer $accessToken"
+    "Content-Type" = 'multipart/related; boundary=boundary'
+    "Content-Length" = $uploadBody.Length
+    }
+
+$response = Invoke-WebRequest -Uri 'https://www.googleapis.com/upload/drive/v2/files?uploadType=multipart' -Method Post -Headers $uploadHeaders -Body $uploadBody
+
+$response
