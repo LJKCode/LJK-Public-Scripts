@@ -1,13 +1,19 @@
 # Get IP of Given Hostname and Copy to Clipboard #
 # PowerShell Script #
 
-[string]$ScriptName = 'Get Hostname IP'
+param(
+
+[string]$ScriptName = 'Get Hostname IP',
 [string]$ScriptAuthor = 'LJK'
+
+)
+
+function Do-The-IP-Get{
 
 [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
 [System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic') | Out-Null
 
-$hostname = [Microsoft.VisualBasic.Interaction]::InputBox("Enter Hostname of the device below.`nType Exit below to end script instead.", "IP Checker")
+$hostname = [Microsoft.VisualBasic.Interaction]::InputBox("Enter Hostname of the device below.", "IP Checker")
 
 If(!$hostname){
 
@@ -59,3 +65,7 @@ If(!$hostname){
 }
 
 Exit
+
+}
+
+Do-The-IP-Get
