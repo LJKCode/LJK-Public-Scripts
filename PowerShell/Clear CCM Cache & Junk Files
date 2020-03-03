@@ -1,52 +1,71 @@
+
+
 # Space clearing for drives #
-  
+
+
 function Do-The-Disk-Clear{
 
-  param (
-  
-  [string]$ScriptName = "Clear Space on Drives",
-  [string]$ScriptAuthor = "LJK"
+ param (
 
-  )
+
+ [string]$ScriptName = "Clear Space on Drives",
+
+ [string]$ScriptAuthor = "LJK"
+ 
+ )
 
 $Hibernation = @'
 
 cmd.exe /C "powercfg -h off"
 
 '@
+ 
+ Try{
 
-  Try{
-  
-    [__comobject]$CCMComObject = New-Object -ComObject 'UIResource.UIResourceMgr'
-  
-    $CacheInfo = $CCMComObject.GetCacheInfo().GetCacheElements()
-  
-    ForEach ($CacheItem in $CacheInfo) {
-    
-    $null = $CCMComObject.GetCacheInfo().DeleteCacheElement([string]$($CacheItem.CacheElementID))
-  
-    }
-      
-    Write-Host "CCM Cache clearing complete." -ForegroundColor Green
-  
-    }Catch{
-    
-    Write-Host "CCM Cache clearing Failed" -ForegroundColor Red
-    
-    }
+
+ [__comobject]$CCMComObject = New-Object -ComObject 'UIResource.UIResourceMgr'
+
+
+ $CacheInfo = $CCMComObject.GetCacheInfo().GetCacheElements()
+
+
+ ForEach ($CacheItem in $CacheInfo) {
+
+
+ $null = $CCMComObject.GetCacheInfo().DeleteCacheElement([string]$($CacheItem.CacheElementID))
+
+
+ }
+
+
+ Write-Host "CCM Cache clearing complete." -ForegroundColor Green
+
+
+ }Catch{
+
+
+ Write-Host "CCM Cache clearing Failed - make sure this was run as admin." -ForegroundColor Red
+
+
+ }
 
 $user = Get-WmiObject -Class Win32_ComputerSystem | select username
+
 $un = $user.username.Split("\")[1]
+
 $TempLocation = "C:" +"\Users\"+ $un +"\AppData\Local\Temp\*"
-  
+ 
+
 Invoke-Expression -Command:$Hibernation
+
 Write-Host "Hibernation has been turned off." -ForegroundColor Green
-
+ 
 Write-Host "Removing temporary junk files now..." -ForegroundColor Green
+
 Remove-item -path $TempLocation -Force -Recurse -ErrorAction Ignore
-
+ 
 Start-Sleep -s 10
-
+ 
 }
 
-Do-The-Disk-Clear
+Do-The-Disk-Clear 
