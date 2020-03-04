@@ -1,71 +1,90 @@
-
-
 # Space clearing for drives #
 
+# Administrator check #
+If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]'Administrator')) {
+    Write-Host "You didn't run this script as an Administrator. This script will self elevate to run as an Administrator and continue."
+    Start-Process powershell.exe -ArgumentList ("\\FS02\SOFTWARE\IT_Scripts\Clear_Space.ps1") -Verb RunAs
+    Start-sleep -s 10
+    Exit
+}
 
+$ErrorActionPreference = 'silentlycontinue'
+
+# Function tasks - initialize function #  
 function Do-The-Disk-Clear{
 
- param (
+# String Parameters - for logging use if required #
 
+  param (
+  
+  [string]$ScriptName = "Clear Space on Drives",
+  [string]$ScriptAuthor = "LJK"
 
- [string]$ScriptName = "Clear Space on Drives",
+  )
 
- [string]$ScriptAuthor = "LJK"
- 
- )
+# Initilize and set DOS Commands #
 
 $Hibernation = @'
 
 cmd.exe /C "powercfg -h off"
 
 '@
- 
- Try{
 
+# Basic write host - give information on console about what the script does #
 
- [__comobject]$CCMComObject = New-Object -ComObject 'UIResource.UIResourceMgr'
+Write-Host "Now clearing space on the system C Drive by doing below:"
+Write-Host ""
+Write-Host "1) Clearing CCM Cache"
+Write-Host "2) Turning off hibernation"
+Write-Host "3) Removing temporary junk files"
+Write-Host "----------------------------------------------------------"
 
+Start-Sleep -s 5
 
- $CacheInfo = $CCMComObject.GetCacheInfo().GetCacheElements()
+# Try and catch - remove and clear the CCM cache files that clog up system space from Software Center and past updates etc. #
 
+  Try{
+  
+    [__comobject]$CCMComObject = New-Object -ComObject 'UIResource.UIResourceMgr'
+  
+    $CacheInfo = $CCMComObject.GetCacheInfo().GetCacheElements()
+  
+    ForEach ($CacheItem in $CacheInfo) {
+    
+    $null = $CCMComObject.GetCacheInfo().DeleteCacheElement([string]$($CacheItem.CacheElementID))
+  
+    }
+      
+    Write-Host "CCM Cache clearing complete." -ForegroundColor Green
+  
+    }Catch{
+    
+    Write-Host "CCM Cache clearing Failed - make sure this was run as admin." -ForegroundColor Red
+    
+    }
 
- ForEach ($CacheItem in $CacheInfo) {
-
-
- $null = $CCMComObject.GetCacheInfo().DeleteCacheElement([string]$($CacheItem.CacheElementID))
-
-
- }
-
-
- Write-Host "CCM Cache clearing complete." -ForegroundColor Green
-
-
- }Catch{
-
-
- Write-Host "CCM Cache clearing Failed - make sure this was run as admin." -ForegroundColor Red
-
-
- }
+# Initialize current logged in username to create correct path for the user TEMP folder #
 
 $user = Get-WmiObject -Class Win32_ComputerSystem | select username
-
 $un = $user.username.Split("\")[1]
-
 $TempLocation = "C:" +"\Users\"+ $un +"\AppData\Local\Temp\*"
- 
 
+# Call initialized DOS command to turn off hibernation and give progress update on console #
+  
 Invoke-Expression -Command:$Hibernation
-
 Write-Host "Hibernation has been turned off." -ForegroundColor Green
- 
-Write-Host "Removing temporary junk files now..." -ForegroundColor Green
 
+Write-Host "Removing temporary junk files now..." -ForegroundColor Green
 Remove-item -path $TempLocation -Force -Recurse -ErrorAction Ignore
- 
-Start-Sleep -s 10
- 
+
+Start-Sleep -s 5
+
+Write-Host "Clearing complete." -ForegroundColor Green
+
+Start-Sleep -s 5
+
 }
 
-Do-The-Disk-Clear 
+# Do-The-Disk-Clear
+
+Do-The-Disk-Clear
