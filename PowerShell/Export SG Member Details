@@ -1,0 +1,75 @@
+# Elevate script if it is run without Admin #
+
+If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]'Administrator')) {
+    Write-Host "You must run this as admin within PowerShell or PowerShell ISE."
+    Start-Process powershell.exe -ArgumentList ("Export_SG_Member_Details.ps1") -Verb RunAs
+    Start-sleep -s 2
+    Exit
+}
+
+# Script details as strings below for logging if required #
+
+[String]$Script_Name = 'Export_SG_Member_Details'
+[String]$Script_Description = 'Exports all members from security group and displays their details'
+[String]$Script_Author = 'LJK'
+[String]$Script_Date = '06/03/2020'
+
+# Initialize the function and tasks #
+
+function Do-The-Export{
+
+# Get the user input for the SG to be checked #
+
+$SecurityGroup = Read-Host -Prompt 'Input the Security Group name' 
+
+# Initialize variables with the outputh path and the file name #
+
+$OutPath = "D:\Exported_List_$($SecurityGroup).csv"
+$FileName = "Exported_List_$($SecurityGroup).csv"
+
+Try{
+
+# Try run something against the SG that was entered to see if it's valid or if it returns error #
+
+Get-ADGroupMember -Identity $SecurityGroup | Out-Null
+Write-Host "Check: The Security Group name entered is valid." -ForegroundColor Green
+
+}Catch{
+
+# Error - SG does not exist / not found. Break out of script at this point #
+
+Write-Host "The Security group you entered does not exist or could not be found." -ForegroundColor Red
+Write-Host "Security Group entered: $SecurityGroup" -ForegroundColor Red
+Write-Host "Ending script..."
+Start-sleep -s 10
+Break
+
+}
+
+# Information on console for user #
+
+Write-Host "Extracting details into CSV file now..." -ForegroundColor Green
+Write-Host ""
+
+# Get the Information - Get the SG and get the users and details and extract to CSV file #
+
+Get-ADGroupMember -Identity $SecurityGroup -Recursive |
+Select-Object -Unique |
+Get-ADUser -Properties Mail, Department, physicalDeliveryOfficeName |
+Select-Object Name, Mail, Department, physicalDeliveryOfficeName |
+Export-Csv -Path $OutPath -NoTypeInformation
+
+# Information on console for user. Tell user where it has been extracted to and what the file name is. Open the file for user. #
+
+Write-Host "Success." -ForegroundColor Green
+Write-Host ""
+Write-Host "CSV File has been extracted now to your D drive as: $($FileName)" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Opening extracted file for you now..." -ForegroundColor Cyan
+Start-Sleep -s 2
+Invoke-Item "$OutPath"
+
+}
+
+# Do the export #
+Do-The-Export
