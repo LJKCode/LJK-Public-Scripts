@@ -1,0 +1,104 @@
+<#
+
+Script name: Assign_AD_Security_Groups
+Author: LJK
+Version: 1.0
+Description: Assigns the user to the correct security groups depending on what setup is required
+
+#>
+
+function Do-the-SG-assign{
+
+
+Import-module ActiveDirectory
+
+$Username = ""
+$DisplayName = ""
+$Selection = ""
+  
+$Array1 = @("", "")
+$Array2 = @("", "")
+$Array3 = @("", "")
+$Array4 = @("", "")
+
+$username = Read-host -Prompt "Please input username"
+
+Try{
+  
+$DisplayName = Get-ADUser -Identity $Username -Properties DisPlayName | Select DisplayName -ExpandProperty DisplayName
+Write-Host "Username is valid." -ForegroundColor Green
+Start-Sleep -s 5
+
+}Catch{
+  
+Write-Host "You have input an invalid username. Ending script." -ForegroundColor Red
+Break
+
+}
+
+Write-host "**********************************************************"
+Write-host ""
+Write-host "Please select from below:" -ForegroundColor Green
+Write-host ""
+Write-host "1 - Name 1" -ForegroundColor Cyan
+Write-host "2 - Name 2" -ForegroundColor Cyan
+Write-host "3 - Name 3" -ForegroundColor Cyan
+Write-host "4 - Name 4" -ForegroundColor Cyan
+Write-host ""
+Write-host "**********************************************************"
+Write-host ""
+
+$Selection = Read-host -Prompt "Enter number from selection (1 - 4)"
+Write-host ""
+
+If($Selection -eq '1'){
+
+Foreach($SGroup in $Array1){
+
+Add-ADGroupMember -identity $SGroup -Members $Username
+Write-host "$($DisplayName) has been added to $($SGroup) successfully." -ForegroundColor Green
+
+} 
+
+}ElseIf($Selection -eq '2'){
+  
+Foreach($SGroup in $Array2){
+
+Add-ADGroupMember -identity $SGroup -Members $Username
+Write-host "$($DisplayName) has been added to $($SGroup) successfully." -ForegroundColor Green
+  
+} 
+  
+}ElseIf($Selection -eq '3'){
+
+Foreach($SGroup in $Array3){
+
+Add-ADGroupMember -identity $SGroup -Members $Username  
+Write-host "$($DisplayName) has been added to $($SGroup) successfully." -ForegroundColor Green
+  
+}
+  
+}ElseIf($Selection -eq '4'){
+  
+Foreach($SGroup in $Array4){
+
+Add-ADGroupMember -identity $SGroup -Members $Username
+Write-host "$($DisplayName) has been added to $($SGroup) successfully." -ForegroundColor Green
+  
+}
+  
+}ElseIf($Selection -lt '1' -or ($Selection -gt '4')){
+
+Write-host "You did not enter a selection number that matches the prior menu. " -ForegroundColor red
+Write-host "Ending script here..."
+Start-sleep -s 3
+Break
+
+}
+  
+Write-host "$($DisplayName) has been added to the required groups now." -ForegroundColor Green
+Start-sleep -s 3
+  
+} 
+
+Do-the-SG-assign
