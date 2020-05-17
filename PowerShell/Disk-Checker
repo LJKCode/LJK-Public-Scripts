@@ -1,0 +1,105 @@
+<#
+
+Script Name: Disk-Checker.ps1
+Author: LJK
+Date of creation: 17th May 2020
+Version: 3.0
+Description: Checks disk space, compares and clears if required. 
+Actions: Self-elevate for admin rights, clears CCM Cache, disables hibernation and clears local temp files under current logged in user.
+
+#>
+
+$ScriptDir = "Script Directory when self elevating to admin Powershell environment" # *** Change this to be correct script path *** #
+$Diskchecker = Get-WmiObject Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object Size,FreeSpace
+$Diskmin = "10" # *** Change this to be required minimum free disk space *** #
+$DiskSize = $Diskchecker.Size / 1GB
+$FreeSpace = $Diskchecker.FreeSpace / 1GB
+$user = Get-WmiObject -Class Win32_ComputerSystem | Select-Object username
+$un = $user.username.Split("\")[1]
+$TempLocation = "C:" +"\Users\"+ $un +"\AppData\Local\Temp\*" # *** Change this to correct temp files location *** #
+
+$DosCom1 = @'
+cmd.exe /C "powercfg -h off"
+'@
+
+If(!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]'Administrator')){
+
+    Write-Host "You are not an administrator. You will be prompted for administrator credentials now. "
+    Start-Sleep -seconds 5
+    Start-Process powershell.exe -ArgumentList ("$($ScriptDir)") -Verb RunAs
+    Exit
+
+}
+
+$ErrorActionPreference = 'silentlycontinue'
+
+Function Show-Disk-Info{
+
+    Write-Host "Total disk Size: $($DiskSize)"
+    Write-Host "Minimum required disk space: $($Diskmin)"
+    Write-Host "Free Space: $($FreeSpace)"
+    Write-Host "----------------------------------------------------------"
+    Write-Host ""
+
+}
+
+Function Show-Start-Message{
+
+    Write-Host "Now clearing space on the system C Drive by doing below:"
+    Write-Host ""
+    Write-Host "1) Clearing CCM Cache."
+    Write-Host "2) Turning off hibernation."
+    Write-Host "3) Removing temporary junk files."
+    Write-Host "----------------------------------------------------------"
+    Start-Sleep -s 5
+
+}
+
+Function Start-Disk-Clean{
+
+    Try{
+  
+        [__comobject]$CCMComObject = New-Object -ComObject 'UIResource.UIResourceMgr'
+  
+        $CacheInfo = $CCMComObject.GetCacheInfo().GetCacheElements()
+  
+        ForEach ($CacheItem in $CacheInfo) {
+    
+        $null = $CCMComObject.GetCacheInfo().DeleteCacheElement([string]$($CacheItem.CacheElementID))
+  
+        }
+      
+        Write-Host "CCM Cache clearing complete." -ForegroundColor Green
+  
+    }Catch{
+    
+        Write-Host "CCM Cache clearing Failed." -ForegroundColor Red
+    
+    }
+  
+    Invoke-Expression -Command:$DosCom1
+    Write-Host "Hibernation has been turned off." -ForegroundColor Green
+
+    Write-Host "Removing temporary junk files now..." -ForegroundColor Green
+    Remove-item -path $TempLocation -Force -Recurse -ErrorAction Ignore
+    Write-Host "Removal complete." -ForegroundColor Green
+
+    Write-Host "Space clearing complete." -ForegroundColor Green
+    Start-Sleep -s 5
+
+}
+
+Show-Disk-Info
+
+If($FreeSpace -lt $Diskmin){
+
+    Show-Start-Message
+    Start-Disk-Clean
+
+}ElseIf($FreeSpace -gt $Diskmin){
+
+    Write-Host "Disk Clearing not required - more than $($Diskmin)GB of free space is available."
+    Start-Sleep -seconds 5
+    Break
+
+}
